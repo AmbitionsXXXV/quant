@@ -6,6 +6,10 @@ import matplotlib.pyplot as plt
 计算20日移动平均线并绘制价格对比图
 统计收益率分布的峰度
 比较不同窗口长度（20日 vs 60日）均线的平滑效果差异
+
+日收益率: R_t = (P_t - P_{t-1}) / P_{t-1}
+年化收益率: R_t = (1 + R_t)^{252} - 1
+移动均线: MA_t = (P_t + P_{t-1} + ... + P_{t-n+1}) / n
 """
 tsla = yf.download("TSLA", start="2020-01-01")["Close"]
 
