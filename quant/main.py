@@ -35,9 +35,9 @@ def main():
     # 2. 例如：昨日100元，今日105元，收益率 = (105-100)/100 = 5%
 
     plt.hist(daily_returns, bins=50, density=True)
-    plt.xlabel('Daily Return')
-    plt.ylabel('Frequency')
-    plt.title('AAPL Daily Returns Distribution')
+    plt.xlabel("Daily Return")
+    plt.ylabel("Frequency")
+    plt.title("AAPL Daily Returns Distribution")
     plt.show()
 
     # 计算均值和标准差
@@ -57,7 +57,7 @@ def main():
     print("\n策略建议:")
     print(f"买入信号阈值: {return_mean - return_std:.4%} (均值-1标准差)")
     print(f"卖出信号阈值: {return_mean + return_std:.4%} (均值+1标准差)")
-    print(f"止损阈值: {return_mean - 2*return_std:.4%} (均值-2标准差)")
+    print(f"止损阈值: {return_mean - 2 * return_std:.4%} (均值-2标准差)")
 
     # normal_returns = np.random.normal(return_mean, return_std, size=1000)
     # plt.hist(daily_returns, bins=50, density=True, alpha=0.6, label='Actual')

@@ -17,15 +17,17 @@ ma_20 = tsla.rolling(window=20).mean()
 ma_60 = tsla.rolling(window=60).mean()
 
 # 绘图比较
-plt.figure(figsize=(12,6))
-plt.plot(tsla, label='Price')
-plt.plot(ma_20, label='20-day MA')
-plt.plot(ma_60, label='60-day MA')
+plt.figure(figsize=(12, 6))
+plt.plot(tsla, label="Price")
+plt.plot(ma_20, label="20-day MA")
+plt.plot(ma_60, label="60-day MA")
 plt.legend()
 plt.show()
 
 # 计算统计量
 returns = tsla.pct_change().dropna()
 # 使用 iloc[0] 获取 Series 中的标量值，避免 FutureWarning
-kurtosis_val = returns.kurt().iloc[0] if hasattr(returns.kurt(), 'iloc') else float(returns.kurt())
+kurtosis_val = (
+    returns.kurt().iloc[0] if hasattr(returns.kurt(), "iloc") else float(returns.kurt())
+)
 print(f"峰度系数: {kurtosis_val:.2f}")
