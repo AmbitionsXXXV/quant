@@ -1,5 +1,5 @@
 [project]
-name = "quant-learn"
+name = "quant"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -13,4 +13,19 @@ dependencies = [
     "scipy>=1.16.0",
     "watchfiles>=1.1.0",
     "yfinance>=0.2.65",
+    "uvloop>=0.21.0,<1.0.0; sys_platform != \"win32\"",
 ]
+
+[tool.setuptools.packages.find]
+include = ["quant*"]
+exclude = [
+    "crates*",
+    "target*",
+    "charts*",
+    "test_backtest*",
+    "backtest_results*",
+]
+
+[build-system]
+requires = ["setuptools>=80", "poetry-core>=2.0.1"]
+build-backend = "poetry.core.masonry.api"
