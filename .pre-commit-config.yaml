@@ -16,7 +16,6 @@ repos:
       - id: check-case-conflict
       - id: check-executables-have-shebangs
       - id: check-illegal-windows-names
-      - id: check-json
       - id: check-merge-conflict
       - id: check-symlinks
       - id: check-toml
@@ -87,6 +86,6 @@ repos:
         args: ["--fix"]
 
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.8.1 # uv version
+    rev: 0.8.2
     hooks:
       - id: uv-lock

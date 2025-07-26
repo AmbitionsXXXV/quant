@@ -3,5 +3,8 @@
     "lookback",
     "sdist",
     "ylim"
-  ]
+  ],
+  "ruff.interpreter": [
+    "/Users/jiantianjianghui/Quant/quant/.venv/bin/python"
+  ],
 }
