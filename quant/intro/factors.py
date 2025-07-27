@@ -64,7 +64,8 @@ class TechnicalFactors:
 
             # 添加波动率
             enriched_data["Volatility"] = TechnicalFactors.calculate_volatility(
-                data, 20,
+                data,
+                20,
             )
 
             # 添加 RSI
@@ -193,7 +194,10 @@ class MomentumFactors:
         try:
             # 价格动量 (权重: 0.7)
             price_momentum = MomentumFactors.calculate_price_momentum(
-                data, lookback_days, period_type, start_date,
+                data,
+                lookback_days,
+                period_type,
+                start_date,
             )
 
             # 成交量动量 (权重: 0.2)

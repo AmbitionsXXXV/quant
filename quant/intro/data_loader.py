@@ -64,7 +64,9 @@ class StockDataLoader:
     """股票数据加载器"""
 
     def __init__(
-        self, period_type: str = "days", start_date: Optional[pd.Timestamp] = None,
+        self,
+        period_type: str = "days",
+        start_date: Optional[pd.Timestamp] = None,
     ):
         """
         初始化数据加载器
@@ -77,7 +79,11 @@ class StockDataLoader:
         self.start_date = start_date
 
     def fetch_single_stock(
-        self, ticker: str, period: str, lookback_days: int, max_retries: int = 2,
+        self,
+        ticker: str,
+        period: str,
+        lookback_days: int,
+        max_retries: int = 2,
     ) -> Optional[pd.DataFrame]:
         """
         获取单只股票数据
@@ -135,7 +141,9 @@ class StockDataLoader:
                             )
                             # 如果max失败，使用指定周期
                             raw_data = yf.download(
-                                ticker, period=period, progress=False,
+                                ticker,
+                                period=period,
+                                progress=False,
                             )
                     else:
                         # 短期回测，使用指定周期
@@ -176,7 +184,10 @@ class StockDataLoader:
         return None
 
     def fetch_stocks_sync(
-        self, tickers: List[str], lookback_days: int, period: str = None,
+        self,
+        tickers: List[str],
+        lookback_days: int,
+        period: str = None,
     ) -> Dict[str, pd.DataFrame]:
         """
         同步获取多只股票数据
@@ -293,7 +304,11 @@ class StockDataLoader:
                 tasks = []
                 for ticker in tickers:
                     task = loop.run_in_executor(
-                        executor, self.fetch_single_stock, ticker, period, lookback_days,
+                        executor,
+                        self.fetch_single_stock,
+                        ticker,
+                        period,
+                        lookback_days,
                     )
                     tasks.append((ticker, task))
 
@@ -326,7 +341,9 @@ class DataManager:
         self.cache: Dict[str, pd.DataFrame] = {}
 
     def get_data_loader(
-        self, period_type: str = "days", start_date: Optional[pd.Timestamp] = None,
+        self,
+        period_type: str = "days",
+        start_date: Optional[pd.Timestamp] = None,
     ) -> StockDataLoader:
         """
         获取数据加载器实例

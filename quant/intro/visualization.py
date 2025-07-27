@@ -53,7 +53,10 @@ class ChartGenerator:
 
             # 2. 价格走势图
             ChartGenerator._create_price_trend_chart(
-                ax2, top_stocks, stock_data, analysis_config,
+                ax2,
+                top_stocks,
+                stock_data,
+                analysis_config,
             )
 
             # 调整布局
@@ -99,7 +102,12 @@ class ChartGenerator:
         """创建动量得分柱状图"""
         if not top_stocks:
             ax.text(
-                0.5, 0.5, "无数据", ha="center", va="center", transform=ax.transAxes,
+                0.5,
+                0.5,
+                "无数据",
+                ha="center",
+                va="center",
+                transform=ax.transAxes,
             )
             return
 
@@ -110,7 +118,12 @@ class ChartGenerator:
         colors = ["green" if score > 0 else "red" for score in scores]
 
         bars = ax.bar(
-            tickers, scores, color=colors, alpha=0.7, edgecolor="black", linewidth=0.8,
+            tickers,
+            scores,
+            color=colors,
+            alpha=0.7,
+            edgecolor="black",
+            linewidth=0.8,
         )
 
         # 添加数值标签
@@ -139,12 +152,20 @@ class ChartGenerator:
 
     @staticmethod
     def _create_price_trend_chart(
-        ax, top_stocks: List[Tuple[str, float]], stock_data: Dict, analysis_config: Dict,
+        ax,
+        top_stocks: List[Tuple[str, float]],
+        stock_data: Dict,
+        analysis_config: Dict,
     ):
         """创建价格走势图"""
         if not top_stocks or not stock_data:
             ax.text(
-                0.5, 0.5, "无数据", ha="center", va="center", transform=ax.transAxes,
+                0.5,
+                0.5,
+                "无数据",
+                ha="center",
+                va="center",
+                transform=ax.transAxes,
             )
             return
 

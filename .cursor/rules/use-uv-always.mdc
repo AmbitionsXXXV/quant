@@ -1,0 +1,7 @@
+---
+alwaysApply: true
+---
+
+# use UV for python project
+
+when run python script, use uv to do it. Not use like `python run xxx.py`

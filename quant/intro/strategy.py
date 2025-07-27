@@ -40,7 +40,8 @@ class MomentumStrategy:
 
         # 获取数据加载器
         self.data_loader = self.data_manager.get_data_loader(
-            period_type=self.period_type, start_date=self.start_date,
+            period_type=self.period_type,
+            start_date=self.start_date,
         )
 
     def _parse_lookback_period(self) -> None:
@@ -63,7 +64,9 @@ class MomentumStrategy:
             raise ValueError("lookback_period 必须是整数（天数）或时间戳字符串")
 
     async def fetch_data_async(
-        self, tickers: List[str], max_workers: int = 5,
+        self,
+        tickers: List[str],
+        max_workers: int = 5,
     ) -> Dict[str, pd.DataFrame]:
         """
         异步获取股票数据
@@ -77,7 +80,9 @@ class MomentumStrategy:
         """
         self.tickers = tickers
         self.stock_data = await self.data_loader.fetch_stocks_async(
-            tickers=tickers, lookback_days=self.lookback_days, max_workers=max_workers,
+            tickers=tickers,
+            lookback_days=self.lookback_days,
+            max_workers=max_workers,
         )
         return self.stock_data
 
@@ -93,7 +98,8 @@ class MomentumStrategy:
         """
         self.tickers = tickers
         self.stock_data = self.data_loader.fetch_stocks_sync(
-            tickers=tickers, lookback_days=self.lookback_days,
+            tickers=tickers,
+            lookback_days=self.lookback_days,
         )
         return self.stock_data
 
@@ -319,7 +325,9 @@ class MomentumStrategy:
 
                 # 计算排名
                 sorted_scores = sorted(
-                    self.momentum_scores.items(), key=lambda x: x[1], reverse=True,
+                    self.momentum_scores.items(),
+                    key=lambda x: x[1],
+                    reverse=True,
                 )
                 for i, (t, _) in enumerate(sorted_scores, 1):
                     if t == ticker:

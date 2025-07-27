@@ -283,7 +283,8 @@ class BatchBacktestEngine:
                 print(f"  - {test_name}: {error}")
 
     def get_best_performers(
-        self, top_n: int = 3,
+        self,
+        top_n: int = 3,
     ) -> List[Tuple[str, List[Tuple[str, float]]]]:
         """
         获取各周期的最佳表现股票
@@ -438,7 +439,9 @@ class BacktestManager:
         return engine
 
     async def run_default_backtest(
-        self, tickers: List[str] = None, output_dir: str = "backtest_results",
+        self,
+        tickers: List[str] = None,
+        output_dir: str = "backtest_results",
     ) -> List[BacktestResult]:
         """
         运行默认配置的回测

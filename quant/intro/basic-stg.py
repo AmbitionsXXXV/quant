@@ -117,7 +117,8 @@ async def demo_batch_backtest():
     try:
         # 运行默认回测配置
         results = await backtest_manager.run_default_backtest(
-            tickers=tech_stocks, output_dir="backtest_results",
+            tickers=tech_stocks,
+            output_dir="backtest_results",
         )
 
         # 显示成功结果
@@ -213,7 +214,9 @@ def main():
 
 # 便捷函数供外部调用
 def quick_analysis(
-    tickers: List[str] = None, lookback_period: int = 60, top_n: int = 3,
+    tickers: List[str] = None,
+    lookback_period: int = 60,
+    top_n: int = 3,
 ) -> MomentumStrategy:
     """
     快速分析函数
