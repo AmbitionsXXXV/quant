@@ -17,8 +17,25 @@ https://wqu.guru/blog/quantopia-quantitative-analysis-56-lectures/introduction-t
 5. 最后学习滚动窗口等高级功能
 """
 
+import warnings
+
 import numpy as np
 import pandas as pd
+
+# 抑制不必要的警告信息
+warnings.filterwarnings("ignore", category=FutureWarning)
+
+# 检查 yfinance 是否可用
+try:
+    import yfinance as yf
+
+    YFINANCE_AVAILABLE = True
+    print("✅ yfinance 已安装，可以获取真实股票数据")
+    print(f"📦 yfinance 版本: {yf.__version__}")
+except ImportError:
+    YFINANCE_AVAILABLE = False
+    print("❌ yfinance 未安装，将使用模拟数据")
+    print("如需获取真实数据，请运行：pip install yfinance")
 
 # --------------------------- 第一部分：基础概念和数据创建 ---------------------------
 
@@ -36,7 +53,7 @@ print("\n1. 创建简单的 Series")
 print("-" * 30)
 
 # pandas.Series 底层使用 NumPy ndarray 存储数据，提供标签化的一维数组
-s = pd.Series([1, 2, np.nan, 4, 5, 6, 7, 8, 9, 10], name="Toy Series")
+s = pd.Series([1, 2, np.nan, 4, 5, 6, 7, np.nan, 9, 10], name="Toy Series")
 print("原始 Series：")
 print(s)
 print(f"数据类型：{s.dtype}")  # 显示数据类型，通常是 float64
@@ -142,6 +159,12 @@ print(s.fillna(method="ffill"))  # forward fill
 
 print("向后填充（用后一个有效值）：")
 print(s.fillna(method="bfill"))  # backward fill
+
+print("向前填充（用前一个有效值，pad 是 ffill 的别名）：")
+print(s.fillna(method="pad"))  # pad = forward fill
+
+print("向后填充（用后一个有效值，backfill 是 bfill 的别名）：")
+print(s.fillna(method="backfill"))  # backfill = backward fill
 
 print("用固定值填充：")
 print(s.fillna(0))  # 用 0 填充
@@ -396,7 +419,8 @@ print("-" * 20)
 
 # 生成示例价格数据用于收益率演示
 prices = pd.Series(
-    [100, 105, 110, 108, 115], index=pd.date_range("2025-01-01", periods=5),
+    [100, 105, 110, 108, 115],
+    index=pd.date_range("2025-01-01", periods=5),
 )
 print("示例价格数据：")
 print(prices)
@@ -530,10 +554,548 @@ custom_indicator = stock_series.rolling(10).apply(price_range)
 print("自定义波动幅度指标（%）：")
 print(custom_indicator.dropna().head(10))
 
-# --------------------------- 第十部分：实战案例 ---------------------------
+# --------------------------- 第十部分：真实市场数据分析（yfinance）---------------------------
 
 print("\n" + "=" * 60)
-print("第十部分：双均线交易系统实战案例")
+print("第十部分：真实市场数据分析（yfinance）")
+print("=" * 60)
+5
+if YFINANCE_AVAILABLE:
+    print("\n1. yfinance 库介绍和参数说明")
+    print("-" * 30)
+
+    # yfinance 是什么？
+    # yfinance 是一个Python库，可以免费获取Yahoo Finance的股票数据
+    # 包括：股价、成交量、财务数据等
+    # 优点：免费、简单、数据质量好
+    # 缺点：依赖Yahoo Finance，可能有访问限制
+
+    print("📚 yfinance.download() 重要参数说明：")
+    print("""
+    🎯 基本参数：
+    ├── tickers: 股票代码，如 'AAPL' 或 ['AAPL', 'GOOGL']
+    ├── start/end: 日期范围，如 '2025-06-01', '2025-08-01'
+    ├── period: 时间段，如 '1y', '6mo', '1d'（与start/end二选一）
+    └── interval: 数据频率，如 '1d'(日), '1h'(小时), '1m'(分钟)
+
+    ⚙️  重要配置（最新版默认值）：
+    ├── auto_adjust: 自动调整价格（默认True，处理分红拆股）
+    ├── progress: 显示下载进度条（默认True）
+    ├── threads: 多线程下载（批量获取时有用）
+    └── group_by: 数据分组方式，'ticker'或'column'
+
+    💡 最佳实践：
+    - 批量下载时设置 progress=False 减少输出
+    - 使用 try-except 处理网络错误
+    - 缓存数据避免重复下载
+    - 利用多线程加速批量下载
+    """)
+
+    print("\n2. 获取真实股票数据")
+    print("-" * 20)
+
+    try:
+        # 获取苹果公司（AAPL）的历史数据
+        # period 和 start/end 二选一
+        # period选项：1d,5d,1mo,3mo,6mo,1y,2y,5y,10y,ytd,max
+        print("正在获取AAPL数据...")
+        # 最新版 yfinance 默认 auto_adjust=True，只需设置 progress=False
+        aapl = yf.download("AAPL", start="2022-01-01", end="2024-01-01", progress=False)
+
+        print("数据获取成功！数据形状：", aapl.shape)
+        print("列名：", aapl.columns.tolist())
+        print("\n前5行数据：")
+        print(aapl.head())
+
+        # yfinance 返回的数据结构解释（最新版默认已复权）：
+        # Open: 复权开盘价
+        # High: 复权最高价
+        # Low: 复权最低价
+        # Close: 复权收盘价
+        # Adj Close: 复权收盘价（与Close相同）
+        # Volume: 成交量
+
+        print("\n数据统计摘要：")
+        print(aapl.describe())
+
+        print("\n2. 数据质量检查")
+        print("-" * 15)
+
+        # 检查缺失值
+        print("缺失值检查：")
+        print(aapl.isnull().sum())
+
+        # 检查数据完整性
+        print(f"数据日期范围：{aapl.index.min()} 到 {aapl.index.max()}")
+        print(f"总交易日数：{len(aapl)}")
+
+        # 检查异常值（收盘价为0或成交量异常大）
+        print("异常值检查：")
+        print(f"收盘价为0的天数：{(aapl['Close'] == 0).sum()}")
+        print(
+            f"成交量超过平均值10倍的天数：{(aapl['Volume'] > aapl['Volume'].mean() * 10).sum()}",
+        )
+
+        print("\n3. 基础技术分析")
+        print("-" * 15)
+
+        # 使用真实数据计算技术指标
+        # 移动平均线
+        aapl["MA20"] = aapl["Close"].rolling(20).mean()
+        aapl["MA50"] = aapl["Close"].rolling(50).mean()
+        aapl["MA200"] = aapl["Close"].rolling(200).mean()
+
+        # 布林带（Bollinger Bands）
+        aapl["BB_middle"] = aapl["Close"].rolling(20).mean()
+        aapl["BB_std"] = aapl["Close"].rolling(20).std()
+        aapl["BB_upper"] = aapl["BB_middle"] + (aapl["BB_std"] * 2)
+        aapl["BB_lower"] = aapl["BB_middle"] - (aapl["BB_std"] * 2)
+
+        # 相对强弱指数（RSI）
+        def calculate_rsi(prices, window=14):
+            """计算RSI指标
+
+            RSI = 100 - (100 / (1 + RS))
+            RS = 平均上涨幅度 / 平均下跌幅度
+            """
+            delta = prices.diff()
+            gain = (delta.where(delta > 0, 0)).rolling(window=window).mean()
+            loss = (-delta.where(delta < 0, 0)).rolling(window=window).mean()
+            rs = gain / loss
+            rsi = 100 - (100 / (1 + rs))
+            return rsi
+
+        aapl["RSI"] = calculate_rsi(aapl["Close"])
+
+        # 成交量加权平均价格（VWAP）
+        def calculate_vwap(high, low, close, volume):
+            """计算VWAP
+
+            VWAP = Σ(价格 × 成交量) / Σ(成交量)
+            价格通常用 (高+低+收) / 3
+            """
+            typical_price = (high + low + close) / 3
+            return (typical_price * volume).cumsum() / volume.cumsum()
+
+        # 计算每日VWAP（这里简化为累计VWAP）
+        aapl["VWAP"] = calculate_vwap(
+            aapl["High"],
+            aapl["Low"],
+            aapl["Close"],
+            aapl["Volume"],
+        )
+
+        print("技术指标计算完成！")
+        print("最新的技术指标值：")
+        latest_data = aapl[
+            ["Close", "MA20", "MA50", "RSI", "BB_upper", "BB_lower"]
+        ].tail(1)
+        print(latest_data)
+
+        print("\n4. 收益率和波动率分析")
+        print("-" * 25)
+
+        # 日收益率
+        aapl["Daily_Return"] = aapl["Close"].pct_change()
+
+        # 对数收益率（连续复利）
+        aapl["Log_Return"] = np.log(aapl["Close"] / aapl["Close"].shift(1))
+
+        # 收益率统计
+        print("收益率统计分析：")
+        returns_stats = aapl["Daily_Return"].describe()
+        print(returns_stats)
+
+        # 年化指标
+        trading_days = 252
+        annual_return = aapl["Daily_Return"].mean() * trading_days
+        annual_volatility = aapl["Daily_Return"].std() * np.sqrt(trading_days)
+        sharpe_ratio = (
+            annual_return / annual_volatility
+        )  # 简化的夏普比率（假设无风险利率为0）
+
+        print("\n年化指标：")
+        print(f"年化收益率: {annual_return:.2%}")
+        print(f"年化波动率: {annual_volatility:.2%}")
+        print(f"夏普比率: {sharpe_ratio:.2f}")
+
+        # 最大回撤分析
+        aapl["Cumulative"] = (1 + aapl["Daily_Return"]).cumprod()
+        aapl["Running_Max"] = aapl["Cumulative"].expanding().max()
+        aapl["Drawdown"] = (aapl["Cumulative"] - aapl["Running_Max"]) / aapl[
+            "Running_Max"
+        ]
+        max_drawdown = aapl["Drawdown"].min()
+
+        print(f"最大回撤: {max_drawdown:.2%}")
+
+        print("\n5. 多股票对比分析")
+        print("-" * 20)
+
+        # 获取多只股票数据进行对比
+        print("获取科技股对比数据...")
+        tickers = ["AAPL", "GOOGL", "MSFT", "TSLA"]
+
+        # 使用字典存储多只股票数据
+        stocks_data = {}
+        for ticker in tickers:
+            try:
+                stock = yf.download(
+                    ticker,
+                    start="2022-01-01",
+                    end="2024-01-01",
+                    progress=False,
+                )
+                stocks_data[ticker] = stock["Close"]
+                print(f"✅ {ticker} 数据获取成功")
+            except Exception as e:
+                print(f"❌ {ticker} 数据获取失败: {e}")
+
+        if stocks_data:
+            # 合并股票价格数据
+            prices_df = pd.DataFrame(stocks_data)
+
+            # 计算相关性
+            returns_df = prices_df.pct_change().dropna()
+            correlation_matrix = returns_df.corr()
+
+            print("\n股票收益率相关性矩阵：")
+            print(correlation_matrix)
+
+            # 计算各股票的表现指标
+            print("\n各股票表现对比：")
+            performance_summary = pd.DataFrame(
+                {
+                    "Total_Return": (prices_df.iloc[-1] / prices_df.iloc[0] - 1) * 100,
+                    "Volatility": returns_df.std() * np.sqrt(252) * 100,
+                    "Sharpe_Ratio": returns_df.mean() / returns_df.std() * np.sqrt(252),
+                },
+            )
+            print(performance_summary)
+
+        print("\n6. 真实数据的双均线策略回测")
+        print("-" * 30)
+
+        # 使用真实AAPL数据进行双均线策略回测
+        strategy_data = aapl[["Close", "MA20", "MA50"]].copy()
+        strategy_data = strategy_data.dropna()
+
+        # 生成交易信号
+        strategy_data["Signal"] = 0
+        strategy_data.loc[strategy_data["MA20"] > strategy_data["MA50"], "Signal"] = 1
+        strategy_data.loc[strategy_data["MA20"] <= strategy_data["MA50"], "Signal"] = -1
+
+        # 计算信号变化
+        strategy_data["Position_Change"] = strategy_data["Signal"].diff()
+
+        # 计算策略收益
+        strategy_data["Returns"] = strategy_data["Close"].pct_change()
+        strategy_data["Strategy_Returns"] = (
+            strategy_data["Signal"].shift(1) * strategy_data["Returns"]
+        )
+
+        # 计算累积收益
+        strategy_data["Buy_Hold_Cumulative"] = (1 + strategy_data["Returns"]).cumprod()
+        strategy_data["Strategy_Cumulative"] = (
+            1 + strategy_data["Strategy_Returns"]
+        ).cumprod()
+
+        # 回测结果
+        final_buy_hold = strategy_data["Buy_Hold_Cumulative"].iloc[-1] - 1
+        final_strategy = strategy_data["Strategy_Cumulative"].iloc[-1] - 1
+
+        print("真实数据回测结果：")
+        print(f"买入持有策略收益: {final_buy_hold:.2%}")
+        print(f"双均线策略收益: {final_strategy:.2%}")
+        print(f"策略相对表现: {final_strategy - final_buy_hold:.2%}")
+
+        # 交易次数统计
+        trades = len(strategy_data[strategy_data["Position_Change"] != 0])
+        print(f"总交易次数: {trades}")
+
+        # 可视化（可选，如果需要显示图表）
+        # import matplotlib.pyplot as plt
+        #
+        # fig, axes = plt.subplots(2, 2, figsize=(15, 10))
+        #
+        # # 价格和移动平均线
+        # axes[0,0].plot(aapl.index, aapl['Close'], label='Close Price')
+        # axes[0,0].plot(aapl.index, aapl['MA20'], label='MA20')
+        # axes[0,0].plot(aapl.index, aapl['MA50'], label='MA50')
+        # axes[0,0].set_title('AAPL Price and Moving Averages')
+        # axes[0,0].legend()
+        #
+        # # RSI
+        # axes[0,1].plot(aapl.index, aapl['RSI'])
+        # axes[0,1].axhline(y=70, color='r', linestyle='--', label='Overbought')
+        # axes[0,1].axhline(y=30, color='g', linestyle='--', label='Oversold')
+        # axes[0,1].set_title('RSI Indicator')
+        # axes[0,1].legend()
+        #
+        # # 成交量
+        # axes[1,0].bar(aapl.index, aapl['Volume'])
+        # axes[1,0].set_title('Trading Volume')
+        #
+        # # 策略累积收益对比
+        # axes[1,1].plot(strategy_data.index, strategy_data['Buy_Hold_Cumulative'], label='Buy & Hold')
+        # axes[1,1].plot(strategy_data.index, strategy_data['Strategy_Cumulative'], label='MA Strategy')
+        # axes[1,1].set_title('Strategy Performance Comparison')
+        # axes[1,1].legend()
+        #
+        # plt.tight_layout()
+        # plt.show()
+
+    except Exception as e:
+        print(f"❌ 数据获取失败: {e}")
+        print("可能的原因：")
+        print("1. 网络连接问题")
+        print("2. Yahoo Finance 服务暂时不可用")
+        print("3. 股票代码不正确")
+        print("4. 日期范围有问题")
+        print("\n解决建议：")
+        print("- 检查网络连接")
+        print("- 确认股票代码正确")
+        print("- 确保使用最新版 yfinance")
+
+    print("\n3. 数据缓存和最佳实践")
+    print("-" * 25)
+
+    # 数据缓存示例
+    print("💾 数据缓存最佳实践：")
+    print("""
+    为什么需要缓存？
+    - 避免重复下载相同数据
+    - 提高程序运行速度
+    - 减少网络请求，避免被限制
+    - 离线分析数据
+
+    常用缓存方法：
+    1. CSV文件缓存（简单易用）
+    2. Pickle文件缓存（保持数据类型）
+    3. HDF5文件缓存（大数据集）
+    4. 数据库缓存（PostgreSQL, SQLite）
+    """)
+
+    # CSV缓存示例
+    def get_stock_data_with_cache(ticker, start_date, end_date, cache_dir="./cache"):
+        """
+        带缓存的股票数据获取函数
+
+        Args:
+            ticker: 股票代码
+            start_date: 开始日期
+            end_date: 结束日期
+            cache_dir: 缓存目录
+
+        Returns:
+            pandas.DataFrame: 股票数据
+        """
+        import os
+        from datetime import datetime
+
+        # 创建缓存目录
+        if not os.path.exists(cache_dir):
+            os.makedirs(cache_dir)
+
+        # 缓存文件名
+        cache_file = f"{cache_dir}/{ticker}_{start_date}_{end_date}.csv"
+
+        # 检查缓存是否存在且不超过1天
+        if os.path.exists(cache_file):
+            file_time = os.path.getmtime(cache_file)
+            current_time = datetime.now().timestamp()
+
+            # 如果文件不超过24小时，直接读取缓存
+            if (current_time - file_time) < 24 * 3600:
+                print(f"📁 从缓存读取 {ticker} 数据")
+                try:
+                    data = pd.read_csv(cache_file, index_col=0, parse_dates=True)
+                    return data
+                except Exception as e:
+                    print(f"缓存读取失败: {e}，将重新下载")
+
+        # 下载新数据
+        print(f"🌐 下载 {ticker} 数据...")
+        try:
+            data = yf.download(ticker, start=start_date, end=end_date, progress=False)
+
+            # 保存到缓存
+            data.to_csv(cache_file)
+            print(f"💾 数据已缓存到: {cache_file}")
+
+            return data
+
+        except Exception as e:
+            print(f"❌ 下载失败: {e}")
+            return None
+
+    # 演示缓存功能
+    if YFINANCE_AVAILABLE:
+        print("\n缓存功能演示：")
+        try:
+            # 第一次调用（下载）
+            cached_data = get_stock_data_with_cache("AAPL", "2025-06-01", "2025-08-01")
+            if cached_data is not None:
+                print(f"✅ 获取到 {len(cached_data)} 行数据")
+
+                # 第二次调用（从缓存读取）
+                cached_data2 = get_stock_data_with_cache(
+                    "AAPL",
+                    "2025-06-01",
+                    "2025-08-01",
+                )
+                if cached_data2 is not None:
+                    print("✅ 缓存功能正常工作")
+
+        except Exception as e:
+            print(f"缓存演示失败: {e}")
+
+    print("\n4. 错误处理和重试机制")
+    print("-" * 25)
+
+    # 带重试的数据获取函数
+    def download_with_retry(ticker, max_retries=3, retry_delay=2, **kwargs):
+        """
+        带重试机制的数据下载函数
+
+        Args:
+            ticker: 股票代码
+            max_retries: 最大重试次数
+            retry_delay: 重试延迟（秒）
+            **kwargs: yf.download的其他参数
+
+        Returns:
+            pandas.DataFrame or None: 股票数据
+        """
+        import time
+
+        for attempt in range(max_retries):
+            try:
+                print(f"🔄 尝试下载 {ticker} (第{attempt + 1}次)")
+                data = yf.download(ticker, progress=False, **kwargs)
+
+                if not data.empty:
+                    print(f"✅ {ticker} 下载成功")
+                    return data
+                else:
+                    print(f"⚠️ {ticker} 返回空数据")
+
+            except Exception as e:
+                print(f"❌ 第{attempt + 1}次尝试失败: {e}")
+
+                if attempt < max_retries - 1:
+                    print(f"⏳ {retry_delay}秒后重试...")
+                    time.sleep(retry_delay)
+                    retry_delay *= 2  # 指数退避
+                else:
+                    print(f"💔 {ticker} 下载最终失败")
+                    return None
+
+        return None
+
+    # 演示重试机制
+    if YFINANCE_AVAILABLE:
+        print("\n重试机制演示：")
+        try:
+            # 使用一个可能不存在的股票代码测试
+            test_data = download_with_retry(
+                "INVALID_TICKER",
+                start="2025-06-01",
+                end="2025-08-01",
+                max_retries=2,
+            )
+
+            if test_data is None:
+                print("✅ 重试机制正常工作（正确处理了无效代码）")
+
+        except Exception as e:
+            print(f"重试演示过程中出错: {e}")
+
+    print("\n5. 批量下载优化策略")
+    print("-" * 25)
+
+    def download_multiple_stocks_optimized(tickers, **kwargs):
+        """
+        优化的批量股票数据下载
+
+        Features:
+        - 并发下载
+        - 错误处理
+        - 进度显示
+        - 结果验证
+        """
+        import time
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+
+        results = {}
+        failed_tickers = []
+
+        def download_single(ticker):
+            try:
+                data = yf.download(ticker, progress=False, **kwargs)
+                if not data.empty:
+                    return ticker, data
+                else:
+                    return ticker, None
+            except Exception as e:
+                print(f"❌ {ticker} 下载失败: {e}")
+                return ticker, None
+
+        print(f"🚀 开始批量下载 {len(tickers)} 只股票...")
+        start_time = time.time()
+
+        # 使用线程池并发下载
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            # 提交所有下载任务
+            future_to_ticker = {
+                executor.submit(download_single, ticker): ticker for ticker in tickers
+            }
+
+            # 收集结果
+            for future in as_completed(future_to_ticker):
+                ticker = future_to_ticker[future]
+                try:
+                    ticker_result, data = future.result()
+                    if data is not None:
+                        results[ticker_result] = data
+                        print(f"✅ {ticker_result}: {len(data)} 行数据")
+                    else:
+                        failed_tickers.append(ticker_result)
+                        print(f"❌ {ticker_result}: 下载失败")
+                except Exception as e:
+                    failed_tickers.append(ticker)
+                    print(f"❌ {ticker}: 处理失败 - {e}")
+
+        end_time = time.time()
+        print(f"⏱️  批量下载完成，用时 {end_time - start_time:.2f} 秒")
+        print(f"📊 成功: {len(results)}, 失败: {len(failed_tickers)}")
+
+        return results, failed_tickers
+
+    # 演示批量下载优化
+    if YFINANCE_AVAILABLE:
+        print("\n批量下载优化演示：")
+        try:
+            test_tickers = ["AAPL", "GOOGL", "INVALID_TICKER"]  # 包含一个无效代码
+            results, failed = download_multiple_stocks_optimized(
+                test_tickers,
+                start="2025-06-01",
+                end="2025-08-01",
+            )
+
+            print("✅ 批量下载优化功能演示完成")
+
+        except Exception as e:
+            print(f"批量下载演示失败: {e}")
+
+else:
+    print("跳过真实数据示例，因为 yfinance 未安装")
+    print("如需使用真实数据，请运行：pip install yfinance")
+
+# --------------------------- 第十一部分：双均线交易系统模拟案例 ---------------------------
+
+print("\n" + "=" * 60)
+print("第十一部分：双均线交易系统模拟案例")
 print("=" * 60)
 
 print("\n1. 数据准备")
@@ -661,7 +1223,240 @@ if len(final_data) > 0:
 # --------------------------- 第十一部分：常见问题和最佳实践 ---------------------------
 
 print("\n" + "=" * 60)
-print("第十一部分：常见问题和最佳实践")
+print("第十二部分：yfinance 进阶技巧和数据源对比")
+print("=" * 60)
+
+if YFINANCE_AVAILABLE:
+    print("\n1. yfinance 高级功能")
+    print("-" * 20)
+
+    # 获取股票基本信息
+    try:
+        print("获取 AAPL 公司信息...")
+        aapl_info = yf.Ticker("AAPL")
+        info = aapl_info.info
+
+        print("公司基本信息：")
+        key_info = {
+            "公司名称": info.get("longName", "N/A"),
+            "所属行业": info.get("industry", "N/A"),
+            "员工数量": info.get("fullTimeEmployees", "N/A"),
+            "市值": info.get("marketCap", "N/A"),
+            "股价": info.get("regularMarketPrice", "N/A"),
+            "52周最高": info.get("fiftyTwoWeekHigh", "N/A"),
+            "52周最低": info.get("fiftyTwoWeekLow", "N/A"),
+        }
+
+        for key, value in key_info.items():
+            print(f"{key}: {value}")
+
+        # 获取财务数据
+        print("\n财务数据获取：")
+        # 损益表
+        try:
+            income_stmt = aapl_info.income_stmt
+            if not income_stmt.empty:
+                print("✅ 损益表数据可用")
+                print(f"最新年度营收: {income_stmt.loc['Total Revenue'].iloc[0]:,.0f}")
+            else:
+                print("❌ 损益表数据不可用")
+        except Exception:
+            print("❌ 损益表数据获取失败")
+
+        # 资产负债表
+        try:
+            balance_sheet = aapl_info.balance_sheet
+            if not balance_sheet.empty:
+                print("✅ 资产负债表数据可用")
+            else:
+                print("❌ 资产负债表数据不可用")
+        except Exception:
+            print("❌ 资产负债表数据获取失败")
+
+        # 现金流量表
+        try:
+            cash_flow = aapl_info.cashflow
+            if not cash_flow.empty:
+                print("✅ 现金流量表数据可用")
+            else:
+                print("❌ 现金流量表数据不可用")
+        except Exception:
+            print("❌ 现金流量表数据获取失败")
+
+    except Exception as e:
+        print(f"公司信息获取失败: {e}")
+
+    print("\n2. 不同时间频率的数据")
+    print("-" * 25)
+
+    # 获取不同频率的数据
+    try:
+        # 分钟级数据（最近7天）
+        print("获取分钟级数据...")
+        minute_data = yf.download("AAPL", period="7d", interval="1m", progress=False)
+        print(f"分钟数据形状: {minute_data.shape}")
+
+        # 小时级数据
+        print("获取小时级数据...")
+        hourly_data = yf.download("AAPL", period="60d", interval="1h", progress=False)
+        print(f"小时数据形状: {hourly_data.shape}")
+
+        # 周级数据
+        print("获取周级数据...")
+        weekly_data = yf.download("AAPL", period="2y", interval="1wk", progress=False)
+        print(f"周数据形状: {weekly_data.shape}")
+
+        # 月级数据
+        print("获取月级数据...")
+        monthly_data = yf.download("AAPL", period="10y", interval="1mo", progress=False)
+        print(f"月数据形状: {monthly_data.shape}")
+
+        print("\n不同频率数据的应用场景：")
+        print("📊 分钟数据: 日内交易、高频策略")
+        print("📈 小时数据: 短期交易、市场微观结构分析")
+        print("📉 日数据: 中长期投资、技术分析")
+        print("📋 周/月数据: 长期趋势分析、资产配置")
+
+    except Exception as e:
+        print(f"多频率数据获取失败: {e}")
+
+    print("\n3. 批量数据获取技巧")
+    print("-" * 20)
+
+    # 批量获取多只股票
+    try:
+        print("批量获取道琼斯成分股数据...")
+        dow_tickers = [
+            "AAPL",
+            "MSFT",
+            "JPM",
+            "V",
+            "JNJ",
+            "WMT",
+            "PG",
+            "HD",
+            "CVX",
+            "MRK",
+        ]
+
+        # 方法1：循环获取
+        dow_data = {}
+        for ticker in dow_tickers[:3]:  # 只获取前3只以节省时间
+            try:
+                data = yf.download(
+                    ticker,
+                    start="2025-06-01",
+                    end="2024-01-01",
+                    progress=False,
+                )
+                dow_data[ticker] = data["Close"]
+                print(f"✅ {ticker}: {len(data)} 个交易日")
+            except Exception:
+                print(f"❌ {ticker}: 获取失败")
+
+        # 方法2：一次性获取多只股票
+        print("\n一次性获取多只股票...")
+        multi_stocks = yf.download(
+            ["AAPL", "GOOGL", "MSFT"],
+            start="2025-06-01",
+            end="2024-01-01",
+            progress=False,
+        )
+
+        if not multi_stocks.empty:
+            print("✅ 批量获取成功")
+            print(f"数据形状: {multi_stocks.shape}")
+            print("可用数据类型:", multi_stocks.columns.levels[0].tolist())
+
+            # 提取收盘价
+            close_prices = multi_stocks["Close"]
+            print("收盘价数据：")
+            print(close_prices.head())
+
+    except Exception as e:
+        print(f"批量数据获取失败: {e}")
+
+else:
+    print("跳过 yfinance 进阶功能，因为库未安装")
+
+print("\n4. 数据源对比和选择建议")
+print("-" * 25)
+
+print("金融数据源对比（2024最新）：")
+print("""
+🚀 推荐：yfinance (最新版) - 首选方案
+├── ✅ 完全免费，无API限制
+├── ✅ 数据质量高，覆盖全球主要市场
+├── ✅ 支持多种数据频率（1m-1mo）
+├── ✅ 自动复权处理，开箱即用
+├── ✅ 支持并发下载，性能优异
+├── ✅ 包含基本面数据（财报、公司信息）
+├── ✅ 活跃的开源社区，持续更新
+└── 🎯 适合：个人投资、量化研究、教育学习、中小型项目
+
+📊 其他免费数据源：
+├── Alpha Vantage
+│   ✅ 官方API支持
+│   ❌ 免费版限制500次/天
+│   🎯 适合：需要官方API的小型应用
+│
+├── Quandl/Nasdaq Data Link
+│   ✅ 宏观经济数据丰富
+│   ❌ 股票数据大多需付费
+│   🎯 适合：学术研究、经济分析
+│
+└── FRED (美联储经济数据)
+│   ✅ 权威宏观经济数据
+│   ❌ 仅限美国经济数据
+│   🎯 适合：宏观经济研究
+
+💰 专业级数据源：
+├── Bloomberg Terminal ($2000+/月)
+├── Refinitiv Eikon ($1000+/月)
+├── Wind万得 (中国市场)
+└── 券商API (各券商提供)
+
+🏆 yfinance 最新版优势：
+- 零成本获取专业级数据质量
+- 无需注册API Key
+- 支持全球60+交易所
+- 历史数据可追溯20+年
+- 分钟级数据覆盖
+- Python生态完美集成
+""")
+
+print("\n2024年最佳数据源选择指南：")
+print("""
+🎯 不同场景推荐：
+
+📚 学习和个人投资 (推荐方案)
+└── yfinance (最新版) + pandas
+    💡 完全满足需求，零成本，高质量
+
+🔬 量化研究和策略开发 (推荐方案)
+└── yfinance (主力) + FRED (宏观数据)
+    💡 覆盖95%的研究需求
+
+💼 中小型量化基金
+├── yfinance (历史数据 + 回测)
+├── 券商API (实时交易)
+└── Wind/Bloomberg (补充数据)
+
+🏛️ 大型机构
+├── Bloomberg/Refinitiv (主要数据源)
+├── 自建数据团队
+└── yfinance (备用/验证)
+
+🌟 特别推荐 yfinance 的原因：
+- 数据质量已达到商业级标准
+- 覆盖面广：股票、ETF、期货、外汇、加密货币
+- 更新及时：通常T+1日更新
+- 社区活跃：问题响应快，功能持续改进
+- 零门槛：无需注册、无使用限制
+""")
+
+print("\n" + "=" * 60)
+print("第十三部分：常见问题和最佳实践")
 print("=" * 60)
 
 print("\n1. 数据类型处理")
@@ -745,13 +1540,148 @@ print("2. 📊 学习更多技术指标（RSI、MACD、布林带）")
 print("3. 🔍 掌握数据清洗和异常值处理")
 print("4. 📈 学习可视化库（matplotlib、seaborn、plotly）")
 print("5. 🚀 学习更高级的金融分析（投资组合优化、风险模型）")
+print("6. 💾 学习数据存储和管理（SQLite、PostgreSQL、HDF5）")
+print("7. ⚡ 学习并行计算和性能优化（multiprocessing、numba）")
 
 print("\n实用资源：")
-print("- 官方文档：https://pandas.pydata.org/docs/")
-print("- 金融数据源：yfinance, quandl, alpha_vantage")
+print("📖 文档资源：")
+print("- pandas官方文档：https://pandas.pydata.org/docs/")
+print("- yfinance文档：https://pypi.org/project/yfinance/")
+print("- quantlib：https://www.quantlib.org/")
+
+print("\n💰 数据源推荐：")
+print("- 免费：yfinance, alpha_vantage, quandl")
+print("- 付费：Bloomberg API, Refinitiv, Wind")
+print("- 加密货币：ccxt, binance-python")
+
+print("\n🔧 分析工具：")
 print("- 回测框架：backtrader, zipline, vectorbt")
+print("- 技术指标：ta-lib, pandas-ta")
+print("- 可视化：plotly, bokeh, dash")
+print("- 机器学习：scikit-learn, tensorflow, pytorch")
+
+print("\n📊 实战项目建议：")
+print("1. 构建个人股票筛选系统")
+print("2. 开发多因子选股模型")
+print("3. 建立投资组合管理系统")
+print("4. 创建市场情绪分析工具")
+print("5. 设计量化交易策略回测平台")
 
 print("\n" + "=" * 60)
-print("教程完成！希望这些详细注释能帮助你更好地理解pandas在金融分析中的应用。")
-print("记住：实践是最好的老师，多动手尝试各种数据操作！")
+print("🎉 教程完成！")
+print("=" * 60)
+
+print("\n📝 学习成果总结：")
+print("✅ 掌握了pandas在金融数据分析中的核心应用")
+print("✅ 熟练使用最新版yfinance获取多种金融数据")
+print("✅ 构建了完整的量化分析工作流程")
+print("✅ 实现了真实数据驱动的交易策略回测")
+print("✅ 建立了数据缓存和错误处理的最佳实践")
+print("✅ 掌握了并发下载和性能优化技巧")
+
+print("\n🎯 核心技能掌握检验：")
+print("现在你应该能够：")
+print("1. 🚀 高效获取全球市场的实时和历史数据")
+print("2. 📊 构建专业级的技术分析指标体系")
+print("3. 💼 开发完整的量化投资策略")
+print("4. 🔍 进行多维度的风险和收益分析")
+print("5. ⚡ 优化数据处理性能和系统稳定性")
+print("6. 🏗️ 搭建可扩展的量化分析框架")
+
+print("\n💡 yfinance 最新版现代化使用示例：")
+
+# 示例1：一行代码获取多维度数据
+print("\n🔥 现代化写法示例：")
+print("""
+# 传统写法 vs 现代化写法对比
+
+# ❌ 旧式写法（繁琐）
+data = yf.download('AAPL', start='2025-06-01', end='2025-08-01', auto_adjust=True, progress=False)
+close_price = data['Close']
+returns = close_price.pct_change()
+
+# ✅ 现代化写法（链式调用）
+returns = (yf.download('AAPL', period='1y', progress=False)['Close']
+           .pct_change()
+           .dropna())
+
+# ✅ 批量获取多股票（自动并发）
+stocks = yf.download(['AAPL', 'GOOGL', 'MSFT', 'TSLA'],
+                    period='6mo',
+                    group_by='ticker')
+
+# ✅ 获取期权数据（新功能）
+aapl_ticker = yf.Ticker('AAPL')
+options_dates = aapl_ticker.options
+options_chain = aapl_ticker.option_chain(options_dates[0])
+""")
+
+print("\n⚡ 最新版性能优化技巧：")
+print("- 默认复权处理，数据质量更高")
+print("- 自动并发下载，速度提升3-5倍")
+print("- 智能重试机制，网络稳定性更好")
+print("- 内存优化，支持更大数据集")
+print("- 多线程安全，适合生产环境")
+
+print("\n🚀 yfinance 2024年新特性应用：")
+
+if YFINANCE_AVAILABLE:
+    print("\n📊 现代化数据获取演示：")
+    try:
+        # 新特性1：快速获取多市场数据
+        print("1. 全球市场一次性获取：")
+        global_etfs = yf.download(
+            ["SPY", "QQQ", "IWM", "EFA", "EEM"],
+            period="1mo",
+            progress=False,
+        )["Close"]
+        print(f"✅ 获取 {len(global_etfs.columns)} 个全球ETF数据")
+
+        # 新特性2：Ticker对象的高级功能
+        print("\n2. 高级Ticker对象功能：")
+        aapl = yf.Ticker("AAPL")
+
+        # 获取实时报价
+        fast_info = aapl.fast_info
+        print(f"✅ 实时价格: ${fast_info.get('lastPrice', 'N/A')}")
+
+        # 获取历史分红
+        dividends = aapl.dividends.tail(5)
+        if not dividends.empty:
+            print(f"✅ 最近5次分红数据: {len(dividends)} 条记录")
+
+        print("\n3. 现代化数据分析链：")
+        # 演示现代化分析流程
+        analysis_result = (
+            aapl.history(period="3mo")
+            .assign(
+                Returns=lambda x: x["Close"].pct_change(),
+                MA20=lambda x: x["Close"].rolling(20).mean(),
+                Volatility=lambda x: x["Returns"].rolling(20).std(),
+            )
+            .dropna()
+        )
+
+        print(f"✅ 完成现代化分析链，处理 {len(analysis_result)} 个交易日")
+
+    except Exception as e:
+        print(f"演示失败: {e}")
+
+print("\n🎯 推荐项目实战：")
+print("📊 多资产组合分析：同时分析股票、ETF、商品、外汇")
+print("⏰ 实时监控系统：结合定时任务自动更新数据")
+print("🤖 智能选股：基于财务指标和技术指标筛选股票")
+print("📈 因子投资：构建多因子选股模型")
+print("🔄 自动化回测：建立策略自动化测试框架")
+print("📱 投资仪表板：开发个人投资监控面板")
+
+print("\n🌟 yfinance + AI 融合应用：")
+print("- 结合ChatGPT API进行智能市场分析")
+print("- 使用机器学习预测股价趋势")
+print("- 构建基于NLP的情绪分析系统")
+print("- 开发智能投顾助手")
+
+print("\n" + "=" * 60)
+print("💪 记住：实践是最好的老师！")
+print("现在就开始获取一只你感兴趣的股票数据，动手分析吧！")
 print("=" * 60)

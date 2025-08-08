@@ -11,3 +11,5 @@ wheels/
 
 # Rust
 target/
+
+cache/
